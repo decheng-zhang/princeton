@@ -29,15 +29,14 @@ import princeton.Springs.Centroid;
 public class Springs {
     static double[] rx = null;
     static double[] ry = null;
-	public double[][] Nodes=null;
+	static double[][] Nodes=null;
 	static double [] w = null;
     static final double particleMass = 1.0;
     static final double drag = 0.1;
     static final double springStrength = 0.1;
     static final double springLength = 30;
-    static final double gravity = 1.0;
-    static final double timeStep = 0.05;
-    static final int INITIAL_CLUSTER =8;
+    static final double timeStep = 0.1;
+    static final int INITIAL_CLUSTER =6;
     static final int MERGE_UPTATE_INTERVAL =20;
     static  int MERGE_DISTANCE=10;
     List<Centroid> cents=null;
@@ -45,6 +44,7 @@ public class Springs {
     static Stopwatch timer1 = null;
     static double mergelastime = 0;
     double networkUsage;
+    
     /**
 	 * @return the cents
 	 */
@@ -74,10 +74,10 @@ public class Springs {
             rx[i] = 100 * Math.random();
             ry[i] = 100 * Math.random();
             
-            w[i] = Math.abs(r.nextGaussian()+5);
+            w[i] = r.nextGaussian()*10+50;
         }
       for(int j =0;j<INITIAL_CLUSTER;j++) {
-        	cents.add( new Centroid(j,clentsnum,getThreshold(clentsnum)));
+        	cents.add( new Centroid(j,clentsnum,getThreshold(INITIAL_CLUSTER)));
         }
 		
 	}
@@ -85,7 +85,7 @@ public class Springs {
 		return timer1.elapsedTime();
 	}
 	private double getThreshold(double clentsnum) {
-		return 1000/(Math.floor(Math.sqrt(clentsnum))+1);
+		return 100/(Math.floor(Math.sqrt(clentsnum))+1);
 	}
 	private Centroid merge(Centroid back,Centroid front) {
 		Centroid retune = null;
@@ -341,12 +341,12 @@ public class Springs {
 
         Draw draw1= new Draw("Spring Algorithm");
         Draw draw2 = new Draw("Kmean Algorithm");
-
+        Draw draw3 = new Draw("Vicinity Algorithm");
         
         
         
         
-        double [][]sites = null;
+        
         
 
         
@@ -360,18 +360,21 @@ public class Springs {
         draw2.setYscale(0, 100);
         draw2.setPenColor(Draw.BLUE);
         draw2.setPenRadius(0.0025);
+        draw3.setXscale(0, 100);
+        draw3.setYscale(0, 100);
+        draw3.setPenColor(Draw.BLUE);
+        draw3.setPenRadius(0.0025);
         //draw1.enableDoubleBuffering();
         
         // initialize the particle positions randomly
   ;
-        
+  		
         Springs s = new Springs(n);
+        s.nodeAdder(10.0,12,3);
         Kmeans k = new Kmeans(draw2);
-        sites = s.nodeAdder(10.0,12,4);
-        /*for (int i = n-4 ;i<n;i++ ) {
-        	rx[i] =70 +10*Math.floor(i/(n-2));
-            ry[i] = 70 +10*(1-(i%2));
-        }*/
+        Vicinity v = new Vicinity(draw3);
+        
+   
       
 
         int tii = 1;
@@ -397,25 +400,27 @@ public class Springs {
                 fy[0] = 0.0;
                 }
 */
-          /*for(int t=0;t<n;t++) {
-        	  rx[t] +=(Math.random()-0.5)*5*timeStep;
-        	  ry[t] += (Math.random()-0.5)*5*timeStep;
+         for(int t=0;t<n;t++) {
+        	  rx[t] +=(Math.random()-0.5)*10*timeStep;
+        	  ry[t] += (Math.random()-0.5)*10*timeStep;
           
             rx[t]= (rx[t]>100)? 100:rx[t];
             rx[t]= (rx[t]<0)? 0:rx[t];
             ry[t]= (ry[t]>100)? 100:ry[t];
             ry[t]= (ry[t]<0)? 0:ry[t];
             
-        }*/
+        }
 
             // clear
             draw1.clear();
             draw2.clear();
+            draw3.clear();
             s.start(draw1);
             k.start();
-            // draw everything
-            for ( int si=0; si<sites.length;si++) {
-            	draw1.filledSquare(sites[si][0]+50,sites[si][1]+50, 1.0);
+            v.start();
+            // draw Sites[]
+            for ( int si=0; si<Nodes.length;si++) {
+            	draw1.filledSquare(Nodes[si][0]+50,Nodes[si][1]+50, 1.0);
             	
             }
            
@@ -428,18 +433,22 @@ public class Springs {
                 draw2.filledCircle(rx[ic], ry[ic], 0.4);
                 draw2.setFont(new Font("", Font.BOLD, 20));
                 draw2.textLeft(rx[ic]+1, ry[ic]+1,String.valueOf(ic));
+                draw3.filledCircle(rx[ic], ry[ic], 0.4);
+                draw3.setFont(new Font("", Font.BOLD, 20));
+                draw3.textLeft(rx[ic]+1, ry[ic]+1,String.valueOf(ic));
                 // draw the connections between every 2 nodes
             }
             
 
             
             draw1.text(35.0, 5.0, String.valueOf(s.getNetworkUsage()));
-            draw2.text(35.0, 5.0, String.valueOf(k.getNetworkUsage()));
-
+            draw2.text(35.0, 5.0, String.valueOf(k.getLastNetworkUsage()));
+            
 
             // show and wait
             draw1.show(10);
             draw2.show(10);
+            draw3.show(10);
            // draw1.pause(10);
         }
     }

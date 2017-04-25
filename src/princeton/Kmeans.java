@@ -12,9 +12,17 @@ public class Kmeans {
 	double []w  = null;
 	List<Kmeanpoint> clientsloca=null;
 	Draw d = null;
+	double lastNetworkUsage=Double.MAX_VALUE;
+	/**
+	 * @return the lastNetworkUsage
+	 */
+	public double getLastNetworkUsage() {
+		return lastNetworkUsage;
+	}
 	double networkUsage;
 	KMeansPlusPlusClusterer<Kmeanpoint> clusterer;
 	List<CentroidCluster<Kmeanpoint>> clusterResults=null;
+	//List<CentroidCluster<Kmeanpoint>> lastClusterResults = null;
 	{
 		rx  = Springs.rx;
 		ry = Springs.ry;
@@ -27,9 +35,7 @@ public class Kmeans {
 		clusterer = new KMeansPlusPlusClusterer<Kmeanpoint>(Springs.INITIAL_CLUSTER, 10000);
 			
 	}
-	public double getNetworkUsage() {
-		return networkUsage;
-	}
+	
 	private List<Kmeanpoint> updateClients(){
 		List<Kmeanpoint> temploclist = new ArrayList<Kmeanpoint>(rx.length);
 		rx  = Springs.rx;
@@ -48,25 +54,50 @@ public class Kmeans {
 	}
 	void Update() {
 		clientsloca = updateClients();
-		clusterResults=clusterer.cluster(clientsloca);
+		if (lastNetworkUsage > caluNetworkUsage()) {
+		System.out.println("Kmean update occurs");
+		}
+		
+	}
+	private double caluNetworkUsage() {
+		List<CentroidCluster<Kmeanpoint>> tempclusterResults=null;
+		double nu =0;
+		clientsloca = updateClients();
+		tempclusterResults=clusterer.cluster(clientsloca);
+		for(int i =0;i<Springs.INITIAL_CLUSTER;i++) {
+			double []po = tempclusterResults.get(i).getCenter().getPoint();
+			
+			for(Kmeanpoint point:tempclusterResults.get(i).getPoints()) {
+				double[] clpo = point.getPoint();
+				double weight = point.getWeight();
+				
+				double dx =clpo[0]-po[0];
+				double dy = clpo[1]-po[1];
+				double distance =Math.sqrt(dx*dx+dy*dy);
+				nu += distance*weight;
+		
+			}	
+		}
+		if(lastNetworkUsage> nu) {
+			lastNetworkUsage=nu;
+			clusterResults = tempclusterResults;
+			}
+		return lastNetworkUsage;
 	}
 	void draw() {
-		networkUsage = 0;
+		
 		for(int i =0;i<Springs.INITIAL_CLUSTER;i++) {
 			double []po = clusterResults.get(i).getCenter().getPoint();
 			d.filledCircle(po[0], po[1], 1);
 			d.textLeft(po[0]+5, po[1]+5, String.valueOf(i));
 			for(Kmeanpoint point:clusterResults.get(i).getPoints()) {
 				double[] clpo = point.getPoint();
-				double weight = point.getWeight();
+				
 				d.line(clpo[0], clpo[1], po[0]	, po[1]);
-				double dx =clpo[0]-po[0];
-				double dy = clpo[1]-po[1];
-				double distance =Math.sqrt(dx*dx+dy*dy);
-				networkUsage += distance*weight;
+			
 		
-		}	
-	}
+			}	
+		}
 	}
 
 }
