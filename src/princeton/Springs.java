@@ -37,7 +37,7 @@ public class Springs {
     static final double springLength = 30;
     static final double timeStep = 0.1;
     static final int INITIAL_CLUSTER =6;
-    static final int MERGE_UPTATE_INTERVAL =20;
+    static final int MERGE_UPTATE_INTERVAL =5;
     static  int MERGE_DISTANCE=10;
     List<Centroid> cents=null;
     Random seed =null;
@@ -324,6 +324,7 @@ public class Springs {
                 networkUsage+= w[j]*tempdistance;
             	}
 		}
+			
 		}
 		
 		
@@ -340,34 +341,24 @@ public class Springs {
         int n = Integer.parseInt(args[0]);
 
         Draw draw1= new Draw("Spring Algorithm");
-        Draw draw2 = new Draw("Kmean Algorithm");
+       Draw draw2 = new Draw("Kmean Algorithm");
         Draw draw3 = new Draw("Vicinity Algorithm");
-        
-        
-        
-        
-        
-        
-
-        
-        
+       
         // set up the drawing area
         draw1.setXscale(0, 100);
         draw1.setYscale(0, 100);
         draw1.setPenColor(Draw.BLUE);
         draw1.setPenRadius(0.0025);
-        draw2.setXscale(0, 100);
-        draw2.setYscale(0, 100);
+       draw2.setXscale(0, 100);
+       draw2.setYscale(0, 100);
         draw2.setPenColor(Draw.BLUE);
         draw2.setPenRadius(0.0025);
         draw3.setXscale(0, 100);
         draw3.setYscale(0, 100);
         draw3.setPenColor(Draw.BLUE);
         draw3.setPenRadius(0.0025);
-        //draw1.enableDoubleBuffering();
         
-        // initialize the particle positions randomly
-  ;
+  
   		
         Springs s = new Springs(n);
         s.nodeAdder(10.0,12,3);
@@ -388,19 +379,9 @@ public class Springs {
                	lltime = Springs.elapsedTime();
                }
         	*/
-            // clear all the forces
          
-            
-            /*if(draw1.mousePressed()) {
-                rx[0] = draw1.mouseX();
-                ry[0] = draw1.mouseY();
-                vx[0] = 0.0;
-                vy[0] = 0.0;
-                fx[0] = 0.0;
-                fy[0] = 0.0;
-                }
-*/
-         for(int t=0;t<n;t++) {
+           //Comment out if what stand point (aka no client mobility consideration)
+         /*for(int t=0;t<n;t++) {
         	  rx[t] +=(Math.random()-0.5)*10*timeStep;
         	  ry[t] += (Math.random()-0.5)*10*timeStep;
           
@@ -410,7 +391,7 @@ public class Springs {
             ry[t]= (ry[t]<0)? 0:ry[t];
             
         }
-
+		*/
             // clear
             draw1.clear();
             draw2.clear();
@@ -428,28 +409,28 @@ public class Springs {
                 // draw a circle for each node
             	
                 draw1.filledCircle(rx[ic], ry[ic], 0.4);
-                draw1.setFont(new Font("", Font.BOLD, 20));
+                draw1.setFont(new Font("", Font.BOLD, 10));
                 draw1.textLeft(rx[ic]+1, ry[ic]+1,String.valueOf(ic));
                 draw2.filledCircle(rx[ic], ry[ic], 0.4);
-                draw2.setFont(new Font("", Font.BOLD, 20));
+                draw2.setFont(new Font("", Font.BOLD, 10));
                 draw2.textLeft(rx[ic]+1, ry[ic]+1,String.valueOf(ic));
                 draw3.filledCircle(rx[ic], ry[ic], 0.4);
-                draw3.setFont(new Font("", Font.BOLD, 20));
+                draw3.setFont(new Font("", Font.BOLD, 10));
                 draw3.textLeft(rx[ic]+1, ry[ic]+1,String.valueOf(ic));
                 // draw the connections between every 2 nodes
             }
             
 
-            
-            draw1.text(35.0, 5.0, String.valueOf(s.getNetworkUsage()));
-            draw2.text(35.0, 5.0, String.valueOf(k.getLastNetworkUsage()));
+            draw1.setFont(new Font("", Font.BOLD, 20));
+			draw1.text(35.0, 5.0, String.valueOf(s.getNetworkUsage()));
+          
             
 
             // show and wait
             draw1.show(10);
             draw2.show(10);
             draw3.show(10);
-           // draw1.pause(10);
+         
         }
     }
 }
