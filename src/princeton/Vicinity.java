@@ -14,11 +14,12 @@ import org.apache.commons.collections4.*;
 import org.apache.commons.collections4.map.MultiValueMap;
 import org.apache.commons.collections4.multimap.*;
 @SuppressWarnings("deprecation")
-public class Vicinity {
+public class Vicinity extends Algorithm{
 	double []rx  =null;
 	double []ry = null;
 	double []w = null;
 	static double vic  = 5;
+	int k_count;
 	double networkUsage;
 	/**
 	 * @return the networkUsage
@@ -33,10 +34,31 @@ public class Vicinity {
 	
 	iterHashMap<Integer, List<Integer>,Integer> mapping=null;
 	{
-		sites= new double[(Springs.Nodes).length][2];
+		//sites= new double[(Springs.Nodes).length][2];
 		
-		System.out.println("what exactly that sits length" +String.valueOf(sites.length));
+		//System.out.println("what exactly that sites length" +String.valueOf(sites.length));
 	}
+	public Vicinity(Instance ins) {
+		this(ins,4);
+	}
+	public Vicinity(Instance ins ,int k_cnt) {
+		k_count  = k_cnt;
+		drawer = new Draw("Vicinity Algorithm");
+		drawer.setXscale(0, 100);
+	    drawer.setYscale(0, 100);
+	    drawer.setPenColor(Draw.BLUE);
+	    drawer.setPenRadius(0.0025);
+		rx = ins.rx;
+		ry = ins.ry;
+		w  = ins.w;
+		sites = ins.Nodes;
+		for ( int si=0; si<sites.length;si++) {
+			sites[si][0] = sites[si][0]+50;
+			sites[si][1] =sites[si][1]+50;
+        }
+		mapping = new iterHashMap<Integer, List<Integer>,Integer>();
+	}
+	@Deprecated
 	public Vicinity( Draw d) {
 		drawer = d;
 		
@@ -57,11 +79,11 @@ public class Vicinity {
 		
 		
 		if((elapsedTime()-mergelastime)> 1.5) {
-			System.out.println("Time to add new site");
+			System.out.println("Time to grow vicinity radius");
 			
 			mergelastime = elapsedTime();
 			mapping = new iterHashMap<Integer, List<Integer>,Integer>();
-			updateCluster(Springs.INITIAL_CLUSTER);
+			updateCluster(k_count);
 			vic= (vic>getThreshold())?vic:vic+5;
 			System.out.println("Update finish, see any difference?");
 		}
@@ -69,7 +91,7 @@ public class Vicinity {
 	}
 	private double getThreshold(){
 	
-		return 100/(Math.floor(Math.sqrt(Springs.INITIAL_CLUSTER))+1);
+		return 100/(Math.floor(Math.sqrt(k_count)));
 	
 	}
 	private double elapsedTime(){
@@ -81,10 +103,21 @@ public class Vicinity {
 		return Math.sqrt(rx*rx+ry*ry);
 		
 	}
-	public void start() {
+	public void iterate() {
+		drawer.clear();
 		networkUsage = 0;
 		Update();
 		show();
+		for (int ic = 0; ic < rx.length; ic++) {
+            // draw a circle for each node
+        	
+            
+            drawer.filledCircle(rx[ic], ry[ic], 0.4);
+            drawer.setFont(new Font("", Font.BOLD, 10));
+            drawer.textLeft(rx[ic]+1, ry[ic]+1,String.valueOf(ic));
+            
+        }
+		drawer.show(10);
 	}
 	private void updateCluster(int centroidnum){
 		

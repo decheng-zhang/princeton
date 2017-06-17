@@ -7,21 +7,17 @@ import org.apache.commons.math3.ml.clustering.*;
 
 import edu.princeton.cs.introcs.Draw;
 
-public class Kmeans {
+public class Kmeans extends Algorithm{
 	double []rx  =null;
 	double []ry = null;
 	double []w  = null;
+	int k_count;
 	double [][] sites = null;
 	List<Kmeanpoint> clientsloca=null;
 	Draw d = null;
-	double lastNetworkUsage=Double.MAX_VALUE;
-	/**
-	 * @return the lastNetworkUsage
-	 */
-	public double getLastNetworkUsage() {
-		return lastNetworkUsage;
-	}
-	double networkUsage;
+	
+
+	//double networkUsage;
 	KMeansPlusPlusClusterer<Kmeanpoint> clusterer;
 	List<CentroidCluster<Kmeanpoint>> clusterResults=null;
 	//List<CentroidCluster<Kmeanpoint>> lastClusterResults = null;
@@ -30,6 +26,32 @@ public class Kmeans {
 		ry = Springs.ry;
 		w= Springs.w;
 	};
+	
+	//TODO deal with correct parameter
+	public Kmeans(Instance ins) {
+		this(ins,4);
+	}
+	public Kmeans(Instance ins,int k_cnt) {
+		networkUsage=Double.MAX_VALUE;
+		k_count = k_cnt;
+		d = new Draw("Kmean Algorithm");
+		 d.setXscale(0, 100);
+	     d.setYscale(0, 100);
+	     d.setPenColor(Draw.BLUE);
+	     d.setPenRadius(0.0025);
+		rx = ins.rx;
+		ry = ins.ry;
+		w  = ins.w;
+		sites = ins.Nodes;
+		clientsloca = new ArrayList<Kmeanpoint>(rx.length);
+		clusterer = new KMeansPlusPlusClusterer<Kmeanpoint>(k_cnt, 10000);
+		
+		for ( int si=0; si<Springs.Nodes.length;si++) {
+			sites[si][0] = Springs.Nodes[si][0]+50;
+			sites[si][1] =Springs.Nodes[si][1]+50;
+        }
+	}
+	@Deprecated
 	public Kmeans(Draw draw2) {
 		//updateClients();
 		d = draw2;
@@ -53,14 +75,15 @@ public class Kmeans {
 		}
 		return temploclist;
 	}
-	void start () {
+	void iterate () {
+		d.clear();
 		Update();
 		draw();
-		
+		d.show(10);
 	}
 	void Update() {
 		clientsloca = updateClients();
-		if (lastNetworkUsage > caluNetworkUsage()) {
+		if (networkUsage > caluNetworkUsage()) {
 		System.out.println("Kmean update occurs");
 		}
 		
@@ -70,7 +93,7 @@ public class Kmeans {
 		double nu =0;
 		clientsloca = updateClients();
 		tempclusterResults=clusterer.cluster(clientsloca);
-		for(int i =0;i<Springs.INITIAL_CLUSTER;i++) {
+		for(int i =0;i<k_count;i++) {
 			double []po = tempclusterResults.get(i).getCenter().getPoint();
 			
 			for(Kmeanpoint point:tempclusterResults.get(i).getPoints()) {
@@ -84,15 +107,15 @@ public class Kmeans {
 		
 			}	
 		}
-		if(lastNetworkUsage> nu) {
-			lastNetworkUsage=nu;
+		if(networkUsage> nu) {
+			networkUsage=nu;
 			clusterResults = tempclusterResults;
 			}
-		return lastNetworkUsage;
+		return nu;
 	}
 	void draw() {
 		
-		for(int i =0;i<Springs.INITIAL_CLUSTER;i++) {
+		for(int i =0;i<k_count;i++) {
 			double []po = clusterResults.get(i).getCenter().getPoint();
 			d.filledCircle(po[0], po[1], 1);
 			d.textLeft(po[0]+5, po[1]+5, String.valueOf(i));

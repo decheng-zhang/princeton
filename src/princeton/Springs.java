@@ -26,7 +26,7 @@ import princeton.Springs.Centroid;
  ******************************************************************************/
 
 
-public class Springs {
+public class Springs extends Algorithm{
     static double[] rx = null;
     static double[] ry = null;
 	static double[][] Nodes=null;
@@ -36,15 +36,17 @@ public class Springs {
     static final double springStrength = 0.1;
     static final double springLength = 30;
     static final double timeStep = 0.1;
-    static final int INITIAL_CLUSTER =6;
+   
     static final int MERGE_UPTATE_INTERVAL =5;
     static  int MERGE_DISTANCE=10;
     List<Centroid> cents=null;
     Random seed =null;
+    int k_count;
     static Stopwatch timer1 = null;
     static double mergelastime = 0;
-    double networkUsage;
-    
+    //double networkUsage;
+    Draw d = null;
+    int count;
     /**
 	 * @return the cents
 	 */
@@ -55,19 +57,54 @@ public class Springs {
 	/**
 	 * @return the nodes
 	 */
+	public Springs(Instance ins) {
+		this(ins,6);
+	}
+	public Springs(Instance ins, int k_cnt) {
+		rx = ins.rx;
+		ry = ins.ry;
+		w  = ins.w;
+		
+		Nodes = ins.Nodes;
+		k_count = k_cnt;
+		cents = new LinkedList<Centroid>();
+		glocon = new double[2][rx.length];
+		Arrays.fill(glocon[0], -1);
+		//System.out.println(Arrays.toString(glocon[0]));
+		Arrays.fill(glocon[1], Double.MAX_VALUE );
+
+        seed = new Random();
+        d= new Draw("Spring Algorithm");
+        d.setXscale(0, 100);
+        d.setYscale(0, 100);
+        d.setPenColor(Draw.BLUE);
+        d.setPenRadius(0.0025);
+         timer1=new Stopwatch();
+        
+
+      for(int j =0;j<k_cnt;j++) {
+        	cents.add( new Centroid(j,rx.length,getThreshold(k_cnt)));
+        }
+		
+	}
 	
+	@Deprecated
 	public Springs(int clentsnum) {
 		Random r = new Random();
 		cents = new LinkedList<Centroid>();
 		glocon = new double[2][clentsnum];
 		Arrays.fill(glocon[0], -1);
-		System.out.println(Arrays.toString(glocon[0]));
+		//System.out.println(Arrays.toString(glocon[0]));
 		Arrays.fill(glocon[1], Double.MAX_VALUE );
 		rx = new double[clentsnum];
 		ry = new double[clentsnum];
 		w = new double[clentsnum];
         seed = new Random();
-        
+        Draw d= new Draw("Spring Algorithm");
+        d.setXscale(0, 100);
+        d.setYscale(0, 100);
+        d.setPenColor(Draw.BLUE);
+        d.setPenRadius(0.0025);
          timer1=new Stopwatch();
         
         for (int i = 0; i < clentsnum; i++) {
@@ -151,30 +188,54 @@ public class Springs {
 		double dy = back.ry-front.ry;
 		return Math.sqrt(dx*dx+dy*dy);
 	}
-	public void start(Draw draw1) {
+
+	public void iterate() {
+		d.clear();
+		
 		networkUsage=0;
 		if((elapsedTime()-mergelastime)> MERGE_UPTATE_INTERVAL) {
-			System.out.println("The cents size before mergecheck func" + cents.size());
-			System.out.println("MERGE_DISTANCE" + MERGE_DISTANCE);
+			//System.out.println("The cents size before mergecheck func  :" + cents.size());
+			//System.out.println("MERGE_DISTANCE  :" + MERGE_DISTANCE);
 			mergelastime = elapsedTime();
 			cents = mergeCheck(cents,MERGE_DISTANCE);
 			
-			System.out.println("The cents size after mergecheck func" + cents.size());
+			//System.out.println("The cents size after mergecheck func" + cents.size());
 		}
-		for(int j = 0;j<cents.size();j++) {
-			cents.get(j).Update();
-			cents.get(j).draw(draw1);
-			
+		Update();
+		
+		 for ( int si=0; si<Nodes.length;si++) {
+         	d.filledSquare(Nodes[si][0]+50,Nodes[si][1]+50, 1.0);
+         	
+         }
+         for (int ic = 0; ic < rx.length; ic++) {
+             // draw a circle for each node
+         	
+             d.filledCircle(rx[ic], ry[ic], 0.4);
+             d.setFont(new Font("", Font.BOLD, 10));
+             d.textLeft(rx[ic]+1, ry[ic]+1,String.valueOf(ic));
+
+         }
+         
+
+        d.setFont(new Font("", Font.BOLD, 20));
+		d.text(35.0, 5.0, String.valueOf(this.getNetworkUsage()));
+        //System.out.println((lastNetworkUsage)+"------"+(networkUsage));
+         
+
+         // show and wait
+         d.show(10);
+         doneCheck();
+	}
+	public void Update() {
+		totalDelay = 0;
+		networkUsage= 0;
+		count = 0;
+	for(int j = 0;j<cents.size();j++) {
+		cents.get(j).Update();
+		cents.get(j).draw();
 		}
-		
-		//System.out.println(Arrays.deepToString(glocon));
-		//for(int j = 0;j<cents.length;j++) {
-		
-		//}
 	}
-	public double getNetworkUsage() {
-		return networkUsage;
-	}
+	
 	public double[][] getNodes() {
 		return Nodes;
 	}
@@ -195,6 +256,50 @@ public class Springs {
 
 		return Nodes;
 		
+	}
+	public void output() {
+		//calculate cost
+		for(int j =0;j<k_count;j++) {
+			int sum = 0;
+			for(int i :cents.get(j).getConnection()) {
+				sum+=i;
+			}
+			int t = 0;
+			while(t<5) {
+				if(sum <= pCpu[t++]) break;
+			}
+			cost += pCost[t-1];
+		}
+		
+		for(int i=0;i<rx.length;i++) {
+			int y = 0;
+			boolean found = false;
+			while(!found&& y<cents.size()){
+				if(cents.get(y).connection[i]==1) {
+					found =true;
+					//break;
+				} ;
+				y++;
+			}
+			if(!found) {
+				bandwidthToCloud += w[i];
+				count++;
+				totalDelay+=300;
+			}
+			found = false;
+			}
+		//System.out.println((count));
+		totalDelay /=rx.length;
+		//calculate bandwidth to cloud
+		/*for(int i=0;i<rx.length;i++) {
+			if(glocon[0][i]==-1.0) {
+				bandwidthToCloud +=w[i];
+				
+				totalDelay +=300 ;
+			}
+		}*/
+		//calculate delay
+	
 	}
 	public class Centroid {
 		
@@ -312,16 +417,20 @@ public class Springs {
                 //System.out.println("\n");
 		}
 	
-		public void draw(Draw draw1) {
-			draw1.filledCircle(rx, ry, 1);
-			draw1.textLeft(rx+5, ry+5, String.valueOf(id));
+		public void draw() {
+		    
+			d.filledCircle(rx, ry, 1);
+			d.textLeft(rx+5, ry+5, String.valueOf(id));
 			for(int j =0;j<totalNum;j++) {
 			if(connection[j]==1) {
-                draw1.line(Springs.rx[j], Springs.ry[j], rx, ry);
+                d.line(Springs.rx[j], Springs.ry[j], rx, ry);
                 double tempdx =Springs.rx[j]-rx;
 				double tempdy = Springs.ry[j]-ry;
 				double tempdistance =Math.sqrt(tempdx*tempdx+tempdy*tempdy);
                 networkUsage+= w[j]*tempdistance;
+               // System.out.println("let me see"+(count++)+":"+ (tempdistance/5));
+                totalDelay+=(tempdistance/5);
+                count++;
             	}
 		}
 			
@@ -334,6 +443,7 @@ public class Springs {
 		public int[] getConnection() {
 			return connection;
 		}
+
 	};
     public static void main(String[] args) {
         // mess around with this, try 7, 8, 9, 10, 11, 12, 15
@@ -359,7 +469,7 @@ public class Springs {
         draw3.setPenRadius(0.0025);
         
   
-  		
+  		//TODO fit initializer to new form
         Springs s = new Springs(n);
         s.nodeAdder(10.0,12,3);
         Kmeans k = new Kmeans(draw2);
@@ -381,7 +491,8 @@ public class Springs {
         	*/
          
            //Comment out if what stand point (aka no client mobility consideration)
-         /*for(int t=0;t<n;t++) {
+         /*
+          for(int t=0;t<n;t++) {
         	  rx[t] +=(Math.random()-0.5)*10*timeStep;
         	  ry[t] += (Math.random()-0.5)*10*timeStep;
           
@@ -390,15 +501,15 @@ public class Springs {
             ry[t]= (ry[t]>100)? 100:ry[t];
             ry[t]= (ry[t]<0)? 0:ry[t];
             
-        }
-		*/
+        	}*/
+		
             // clear
-            draw1.clear();
+            /*draw1.clear();
             draw2.clear();
             draw3.clear();
-            s.start(draw1);
-            k.start();
-            v.start();
+            s.iterate();
+            k.iterate();
+            v.iterate();*/
             // draw Sites[]
             for ( int si=0; si<Nodes.length;si++) {
             	draw1.filledSquare(Nodes[si][0]+50,Nodes[si][1]+50, 1.0);
