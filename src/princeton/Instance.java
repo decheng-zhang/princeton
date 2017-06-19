@@ -15,7 +15,7 @@ import jxl.write.Number;
 public class Instance {
 	final int [][] labelPosition = {{0,0},{0,1},{0,2},{0,4},{0,5},{0,6},{0,9},{0,10},{0,11},{0,12},{0,13}};
  	final String[] labelName = {"Users", "Possiblei","distanceU","Possiblei","Possiblej","distanceT","Users","Cpu","Memory","Packets","BandwidthU"};
- 	final double [] areaScale= {100,100};
+ 	final double [] areaScale= Helper.areaScale;
 	
 	double[] rx = null;
     double[] ry = null;
@@ -24,10 +24,11 @@ public class Instance {
 	int [] cpu;
 	int[] mem;
 	int[] packets;
-	int[]	bandwidth;
+	int[] bandwidth;
+	int[] wifiType;
 	int clents;
 	int fogs;
-	public ConcurrentLinkedQueue<String> results;
+	public ConcurrentLinkedQueue<Object[]> results;
 	/**
 	 * @param clentsnum
 	 * @param k_cnt
@@ -35,7 +36,7 @@ public class Instance {
 	public Instance(int clentsnum, int k_cnt) {
 		clents = clentsnum;
 		fogs = k_cnt;
-		results  = new ConcurrentLinkedQueue<String>();
+		results  = new ConcurrentLinkedQueue<Object[]>();
 		rx = new double[clentsnum];
 		ry = new double[clentsnum];
 		w = new double[clentsnum];
@@ -43,6 +44,7 @@ public class Instance {
 		mem= new int[clentsnum];
 		packets = new int[clentsnum];
 		bandwidth = new int[clentsnum];
+		wifiType = new int[clentsnum];
 		//Nodes = nodeAdder(10.0,12,3);
 		Nodes = nodeRandomizer(areaScale, k_cnt);
         //Nodes = nodeCutter((areaScale),(int)Math.sqrt(k_cnt));
@@ -55,6 +57,7 @@ public class Instance {
             mem[i]= r.nextInt(720)+1;
             packets[i]= r.nextInt(1000)+1;
             bandwidth[i] = packets[i] *1500;
+            wifiType[i]=(r.nextInt(6)+2)*10;
         }
 	}
 	public void serializer() {
@@ -72,7 +75,7 @@ public class Instance {
 				sheet.addCell(new Number(0,p,i+1));
 				sheet.addCell(new Number(1,p,j+1));
 				double dis = Math.sqrt(Math.pow((rx[i]-Nodes[j][0]),2)+Math.pow((ry[i]-Nodes[j][1]),2));
-				sheet.addCell(new Number(2,p,dis*10));
+				sheet.addCell(new Number(2,p,dis));
 				p++;
 			}
 		}
@@ -84,7 +87,7 @@ public class Instance {
 			sheet.addCell(new Number(4,p,j+1));
 			sheet.addCell(new Number(5,p,j+1));
 			double dis = Math.sqrt(Math.pow((Nodes[i][0]-Nodes[j][0]),2)+Math.pow((Nodes[i][0]-Nodes[j][1]),2));
-			sheet.addCell(new Number(6,p,dis*10));
+			sheet.addCell(new Number(6,p,dis));
 			p++;
 			
 		}

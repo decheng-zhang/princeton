@@ -47,6 +47,9 @@ public class Springs extends Algorithm{
     //double networkUsage;
     Draw d = null;
     int count;
+    int []bandwidth;
+    double []bandwidthMatrix ;
+    int []wifiType;
     /**
 	 * @return the cents
 	 */
@@ -64,7 +67,9 @@ public class Springs extends Algorithm{
 		rx = ins.rx;
 		ry = ins.ry;
 		w  = ins.w;
-		
+		wifiType = ins.wifiType;
+		bandwidth = ins.bandwidth;
+		bandwidthMatrix = new double[rx.length];
 		Nodes = ins.Nodes;
 		k_count = k_cnt;
 		cents = new LinkedList<Centroid>();
@@ -74,7 +79,7 @@ public class Springs extends Algorithm{
 		Arrays.fill(glocon[1], Double.MAX_VALUE );
 
         seed = new Random();
-        d= new Draw("Spring Algorithm");
+        d= new Draw(String.format("Spring Algorithm-%d",k_cnt));
         d.setXscale(0, 100);
         d.setYscale(0, 100);
         d.setPenColor(Draw.BLUE);
@@ -192,7 +197,8 @@ public class Springs extends Algorithm{
 	public void iterate() {
 		d.clear();
 		
-		networkUsage=0;
+		
+		
 		if((elapsedTime()-mergelastime)> MERGE_UPTATE_INTERVAL) {
 			//System.out.println("The cents size before mergecheck func  :" + cents.size());
 			//System.out.println("MERGE_DISTANCE  :" + MERGE_DISTANCE);
@@ -204,7 +210,7 @@ public class Springs extends Algorithm{
 		Update();
 		
 		 for ( int si=0; si<Nodes.length;si++) {
-         	d.filledSquare(Nodes[si][0]+50,Nodes[si][1]+50, 1.0);
+         	d.filledSquare(Nodes[si][0],Nodes[si][1], 1.0);
          	
          }
          for (int ic = 0; ic < rx.length; ic++) {
@@ -229,6 +235,7 @@ public class Springs extends Algorithm{
 	public void Update() {
 		totalDelay = 0;
 		networkUsage= 0;
+		bandwidthToCloud = 0;
 		count = 0;
 	for(int j = 0;j<cents.size();j++) {
 		cents.get(j).Update();
@@ -258,6 +265,7 @@ public class Springs extends Algorithm{
 		
 	}
 	public void output() {
+
 		//calculate cost
 		for(int j =0;j<k_count;j++) {
 			int sum = 0;
@@ -265,10 +273,12 @@ public class Springs extends Algorithm{
 				sum+=i;
 			}
 			int t = 0;
+			//TODO upbound for machine type capacity
 			while(t<5) {
 				if(sum <= pCpu[t++]) break;
 			}
 			cost += pCost[t-1];
+			cost += Helper.costPerLocation;
 		}
 		
 		for(int i=0;i<rx.length;i++) {
@@ -282,14 +292,16 @@ public class Springs extends Algorithm{
 				y++;
 			}
 			if(!found) {
-				bandwidthToCloud += w[i];
+				bandwidthToCloud += (double)bandwidth[i];
+				bandwidthMatrix[i]=(double)bandwidth[i];
 				count++;
-				totalDelay+=300;
+				totalDelay+=getUserToCloudDelay(i);
 			}
 			found = false;
 			}
-		//System.out.println((count));
-		totalDelay /=rx.length;
+		//System.out.println(k_count);
+		//System.out.println(Arrays.toString(bandwidthMatrix));
+		//totalDelay /=rx.length;
 		//calculate bandwidth to cloud
 		/*for(int i=0;i<rx.length;i++) {
 			if(glocon[0][i]==-1.0) {
@@ -299,7 +311,15 @@ public class Springs extends Algorithm{
 			}
 		}*/
 		//calculate delay
+		
+		
 	
+	}
+	private double getUserToCloudDelay(int idx) {
+		return 12000/(wifiType[idx]*1000000) + 0.0056+ 0.000075;
+	}
+	public double getUserToFogDelay(int idx, double dist){
+		return 12000/(wifiType[idx]*1000000) + dist/177000 +0.0000125;
 	}
 	public class Centroid {
 		
@@ -429,14 +449,16 @@ public class Springs extends Algorithm{
 				double tempdistance =Math.sqrt(tempdx*tempdx+tempdy*tempdy);
                 networkUsage+= w[j]*tempdistance;
                // System.out.println("let me see"+(count++)+":"+ (tempdistance/5));
-                totalDelay+=(tempdistance/5);
+                totalDelay+=getUserToFogDelay(j,tempdistance);
+                bandwidthToCloud+=bandwidth[j]*Helper.percent2Cloud;
+                bandwidthMatrix[j]=bandwidth[j]*Helper.percent2Cloud;
                 count++;
             	}
 		}
 			
 		}
 		
-		
+
 		/**
 		 * @return the connection
 		 */
