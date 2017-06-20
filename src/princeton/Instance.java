@@ -1,9 +1,16 @@
 package princeton;
 
+import java.util.Date;
 import java.util.Random;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+import java.text.SimpleDateFormat;
 
 import jxl.*;
 import jxl.write.*;
@@ -12,7 +19,7 @@ import jxl.write.Number;
  * @author dechengzhang-admin
  *
  */
-public class Instance {
+public class Instance implements Serializable{
 	final int [][] labelPosition = {{0,0},{0,1},{0,2},{0,4},{0,5},{0,6},{0,9},{0,10},{0,11},{0,12},{0,13}};
  	final String[] labelName = {"Users", "Possiblei","distanceU","Possiblei","Possiblej","distanceT","Users","Cpu","Memory","Packets","BandwidthU"};
  	final double [] areaScale= Helper.areaScale;
@@ -29,11 +36,28 @@ public class Instance {
 	int clents;
 	int fogs;
 	public ConcurrentLinkedQueue<Object[]> results;
+
+	public Instance(int clentsnum, int k_cnt, String path) {
+		String tpath;
+		if(path == null) {
+		Date now = new Date();
+		SimpleDateFormat dateFormatter = new SimpleDateFormat("y-M-d'_'h-m");
+		tpath = (clentsnum)+"userOn"+(k_cnt)+"---"+dateFormatter.format(now);
+		}else {
+		tpath = path;
+		}
+		InstanceBuilder(clentsnum,k_cnt,"tmp/"+tpath);
+	}
+
 	/**
 	 * @param clentsnum
 	 * @param k_cnt
 	 */
-	public Instance(int clentsnum, int k_cnt) {
+	public void InstanceBuilder(int clentsnum, int k_cnt, String path) {
+		File varTmpDir = new File(path+".ser");
+		System.out.println("checking path:  "+path +".ser");
+		boolean exists = varTmpDir.exists();
+		if(!exists) {
 		clents = clentsnum;
 		fogs = k_cnt;
 		results  = new ConcurrentLinkedQueue<Object[]>();
@@ -58,11 +82,32 @@ public class Instance {
             packets[i]= r.nextInt(1000)+1;
             bandwidth[i] = packets[i] *1500;
             wifiType[i]=(r.nextInt(6)+2)*10;
+          
         }
+		this.serializer(path);
+		this.objectSerializer(path);
+		}else {
+			Instance tmp = objectDeserializer(path);
+			clents = tmp.clents;
+			fogs = tmp.fogs;
+			results  = new ConcurrentLinkedQueue<Object[]>();
+			rx = tmp.rx;
+			ry = tmp.ry;
+			w = tmp.w;
+			cpu = tmp.cpu;
+			mem= tmp.mem;
+			packets = tmp.packets;
+			bandwidth = tmp.bandwidth;
+			wifiType = tmp.wifiType;
+			//Nodes = nodeAdder(10.0,12,3);
+			Nodes = tmp.Nodes;
+
+		}
 	}
-	public void serializer() {
+
+	public void serializer(String path) {
 		try {
-		WritableWorkbook workbook = Workbook.createWorkbook(new File("output.xls"));
+		WritableWorkbook workbook = Workbook.createWorkbook(new File(path+".xls"));
 		WritableSheet sheet = workbook.createSheet("Sheet1",0);
 		//Writing Label
 		for(int i=0;i<labelPosition.length;i++) {
@@ -110,6 +155,38 @@ public class Instance {
 			e.printStackTrace();
 		}
 		
+	}
+	public Instance objectDeserializer(String path) {
+		Instance e=null;
+		try {
+		FileInputStream fileIn = new FileInputStream(path+".ser");
+		
+        ObjectInputStream in = new ObjectInputStream(fileIn);
+        e= (Instance) in.readObject();
+        in.close();
+        fileIn.close();
+        return e;
+     }catch(IOException i) {
+        i.printStackTrace();
+        return null;
+     }catch(ClassNotFoundException c) {
+        System.out.println("class not found");
+        c.printStackTrace();
+        return null;
+     }
+		//return e;
+	}
+	public void objectSerializer(String path) {
+		try {
+			FileOutputStream fileOut = new FileOutputStream(path+".ser");
+			ObjectOutputStream out = new ObjectOutputStream(fileOut);
+			out.writeObject(this);
+			out.close();
+			fileOut.close();
+			System.out.printf("Serializer data done");
+		}catch(IOException e) {
+			e.printStackTrace();
+		}
 	}
 	/**
 	 * @param radius 
@@ -170,6 +247,6 @@ public class Instance {
 		return nodes;
 	}
 	public static void main(String args[]) {
-		 (new Instance(5,10)).serializer();
+		 (new Instance(5,10)).objectSerializer();
 	 }
 }

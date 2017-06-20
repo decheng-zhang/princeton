@@ -1,16 +1,21 @@
 package princeton;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.concurrent.CountDownLatch;
 
 import org.apache.commons.math3.util.OpenIntToDoubleHashMap.Iterator;
 
 public class Decheng {
 	static final int N = 30;
+	
 	public static void main(String[] args) throws InterruptedException {
 		CountDownLatch doneSignal = new CountDownLatch(N);// TODO Auto-generated method stub
 		
-		Instance t = new Instance(50,6);
+		Instance t = new Instance(50,6,Helper.outputFileName);
 		for(int i =0;i<N;++i) {
 			(new Thread(new Exp(t,("spring-"+((i%6)+1)),true,doneSignal))).start();
 		}
