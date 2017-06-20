@@ -20,7 +20,7 @@ public class Vicinity extends Algorithm{
 	double []w = null;
 	static double vic  = 5;
 	int k_count;
-	double networkUsage;
+
 	/**
 	 * @return the networkUsage
 	 */
@@ -42,8 +42,9 @@ public class Vicinity extends Algorithm{
 		this(ins,4);
 	}
 	public Vicinity(Instance ins ,int k_cnt) {
+		instance = ins;
 		k_count  = k_cnt;
-		drawer = new Draw("Vicinity Algorithm");
+		drawer = new Draw("Vicinity Algorithm-"+(k_cnt));
 		drawer.setXscale(0, 100);
 	    drawer.setYscale(0, 100);
 	    drawer.setPenColor(Draw.BLUE);
@@ -51,11 +52,12 @@ public class Vicinity extends Algorithm{
 		rx = ins.rx;
 		ry = ins.ry;
 		w  = ins.w;
+		wifiType = ins.wifiType;
 		sites = ins.Nodes;
-		for ( int si=0; si<sites.length;si++) {
+		/*for ( int si=0; si<sites.length;si++) {
 			sites[si][0] = sites[si][0]+50;
 			sites[si][1] =sites[si][1]+50;
-        }
+        }*/
 		mapping = new iterHashMap<Integer, List<Integer>,Integer>();
 	}
 	@Deprecated
@@ -74,8 +76,9 @@ public class Vicinity extends Algorithm{
 	
 
 	public void Update() {
-		rx  = Springs.rx;
-		ry = Springs.ry;
+		super.Update();
+		rx  = instance.rx;
+		ry = instance.ry;
 		
 		
 		if((elapsedTime()-mergelastime)> 1.5) {
@@ -104,20 +107,42 @@ public class Vicinity extends Algorithm{
 		
 	}
 	public void iterate() {
+		doneCheck();
 		drawer.clear();
-		networkUsage = 0;
+		
 		Update();
 		show();
 		for (int ic = 0; ic < rx.length; ic++) {
             // draw a circle for each node
-        	
-            
             drawer.filledCircle(rx[ic], ry[ic], 0.4);
             drawer.setFont(new Font("", Font.BOLD, 10));
             drawer.textLeft(rx[ic]+1, ry[ic]+1,String.valueOf(ic));
-            
         }
 		drawer.show(10);
+		
+	}
+	public void doneCheck(){
+		exit = (vic>getThreshold())? true:false;
+		
+	}
+	public void output() {
+		//calculate cost
+		for(Integer k: mapping.keySet()) {
+			drawer.filledCircle(sites[k][0],sites[k][1], 1);
+			drawer.textLeft(sites[k][0]+5, sites[k][1], String.valueOf(k));
+			int sum = 0;
+			for(Integer v: mapping.get(k)) {
+				sum++;
+			}
+			int t = 0;
+			//TODO upbound for machine type capacity
+			while(t<5) {
+				if(sum <= pCpu[t++]) break;
+			}
+			cost += pCost[t-1];
+			cost += Helper.costPerLocation;
+		}
+		
 	}
 	private void updateCluster(int centroidnum){
 		
@@ -228,6 +253,9 @@ public class Vicinity extends Algorithm{
 				drawer.line(sites[k][0], sites[k][1], rx[v]	, ry[v]);
 				double tempdistance = distance(sites[k][0], sites[k][1], rx[v]	, ry[v]);
 				networkUsage+= w[v]*tempdistance;
+				totalDelay+=getUserToFogDelay(v, tempdistance);
+				bandwidthToCloud += instance.bandwidth[v]*Helper.percent2Cloud;
+				
 			}
 			
 			

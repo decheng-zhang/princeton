@@ -20,8 +20,8 @@ import jxl.write.Number;
  *
  */
 public class Instance implements Serializable{
-	final int [][] labelPosition = {{0,0},{0,1},{0,2},{0,4},{0,5},{0,6},{0,9},{0,10},{0,11},{0,12},{0,13}};
- 	final String[] labelName = {"Users", "Possiblei","distanceU","Possiblei","Possiblej","distanceT","Users","Cpu","Memory","Packets","BandwidthU"};
+	final int [][] labelPosition = {{0,0},{0,1},{0,2},{0,4},{0,5},{0,6},{0,9},{0,10},{0,11},{0,12},{0,13},{0,14}};
+ 	final String[] labelName = {"Users", "Possiblei","distanceU","Possiblei","Possiblej","distanceT(KM)","Users","Cpu","Memory(MB)","Packets","BandwidthU(Byte)","wifiType(Mbps)"};
  	final double [] areaScale= Helper.areaScale;
 	
 	double[] rx = null;
@@ -146,6 +146,7 @@ public class Instance implements Serializable{
 			sheet.addCell(new Number(11,p,mem[i]));
 			sheet.addCell(new Number(12,p,packets[i]));
 			sheet.addCell(new Number(13,p,bandwidth[i]));
+			sheet.addCell(new Number(14,p,wifiType[i]));
 			p++;
 		}
 			
@@ -247,6 +248,11 @@ public class Instance implements Serializable{
 		return nodes;
 	}
 	public static void main(String args[]) {
-		 (new Instance(5,10)).objectSerializer();
-	 }
+		for(int j =1;j<3;j++) {
+		for(int i =1;i<21;i++) {
+			String path = (i*5)+"-"+(j*5)+"-version-1";
+		Instance t = new Instance(i*5,j*5,path);
+		 t.objectSerializer(path);
+		 t.serializer(path);
+	 }}}
 }

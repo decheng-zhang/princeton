@@ -8,11 +8,16 @@ public class Kmeanpoint extends DoublePoint {
 	 */
 	private static final long serialVersionUID = 1L;
 	double w ;
-	public Kmeanpoint(double[]location,double weight){
+	int index;
+	public Kmeanpoint(double[]location,double weight,int idx){
 			super(location);
 			w = weight;
+			index =idx;
 		}
 	public double getWeight() {
 		return w;
+	}
+	public int getIdx() {
+		return index;
 	}
 }
