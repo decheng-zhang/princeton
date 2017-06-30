@@ -24,12 +24,10 @@ public class Kmeans extends Algorithm{
 
 	
 	//TODO deal with correct parameter
-	public Kmeans(Instance ins) {
-		this(ins,4);
-	}
+
 	public Kmeans(Instance ins,int k_cnt) {
 		
-		
+		super(ins);
 		k_count = k_cnt;
 		d = new Draw("Kmean Algorithm-"+(k_cnt));
 		 d.setXscale(0, 100);
@@ -39,25 +37,14 @@ public class Kmeans extends Algorithm{
 		rx = ins.rx;
 		ry = ins.ry;
 		w  = ins.w;
-		wifiType = ins.wifiType;
+		
 		sites = ins.Nodes;
 		clientsloca = new ArrayList<Kmeanpoint>(rx.length);
 		clusterer = new KMeansPlusPlusClusterer<Kmeanpoint>(k_cnt, 10000);
 		instance =ins;
 	
 	}
-	@Deprecated
-	public Kmeans(Draw draw2) {
-		//updateClients();
-		d = draw2;
-		clientsloca = new ArrayList<Kmeanpoint>(rx.length);
-		clusterer = new KMeansPlusPlusClusterer<Kmeanpoint>(Springs.INITIAL_CLUSTER, 10000);
-		sites=new double[Springs.Nodes.length][2];
-		for ( int si=0; si<Springs.Nodes.length;si++) {
-			sites[si][0] = Springs.Nodes[si][0]+50;
-			sites[si][1] =Springs.Nodes[si][1]+50;
-        }
-	}
+
 	
 	private List<Kmeanpoint> updateClients(){
 		List<Kmeanpoint> temploclist = new ArrayList<Kmeanpoint>(rx.length);
@@ -70,13 +57,24 @@ public class Kmeans extends Algorithm{
 		}
 		return temploclist;
 	}
+	@Override
 	void iterate () {
 		d.clear();
 		Update();
 		draw();
+        for (int ic = 0; ic < rx.length; ic++) {
+            // draw a circle for each node
+        	
+            d.filledCircle(rx[ic], ry[ic], 0.4);
+            d.setFont(new Font("", Font.BOLD, 10));
+            d.textLeft(rx[ic]+1, ry[ic]+1,String.valueOf(ic));
+
+        }
 		d.show(10);
 		doneCheck();
+		
 	}
+	@Override
 	public void doneCheck(){
 		if(timer1.elapsedTime()>Helper.kmeanTimeout)
 			exit = true;
@@ -85,29 +83,41 @@ public class Kmeans extends Algorithm{
 		super.Update();
 		caluNetworkUsage();
 	}
+	@Override
 	void output() {
 		List<FogEntity> flist = new ArrayList<FogEntity>();
 		//calculate cost;
 		for(int i =0;i<k_count;i++) {
 		double []po = clusterResults.get(i).getCenter().getPoint();
 		FogEntity e = new FogEntity(super.closestProjector(po));
-		int sum = 0;
+	
 		for(Kmeanpoint point:clusterResults.get(i).getPoints()) {
 			e.addClient(point.getIdx());	
-			sum++;
+			
 			}
 		flist.add(e);
-		calCost(flist);
-			int t = 0;
-			//TODO upbound for machine type capacity
-			while(t<5) {
-				if(sum <= pCpu[t++]) break;
-			}
-			cost += pCost[t-1];
-			cost += Helper.costPerLocation;
 		}
+		
+		cost = calCost(flist);
 		//calculate delay;
+		bandwidthToCloud = 0.0;
+		for(FogEntity f:flist) {
+			for(Integer i:f.clientIdxList) {
+				double []ic = {instance.rx[i],instance.ry[i]};
+				if(!secondDropList.contains(i)) {
+				totalDelay +=getUserToFogDelay(i,f.getDist2Client(ic));
+				//System.out.println(totalDelay);
+				bandwidthToCloud += (double)instance.bandwidth[i]*Helper.percent2Cloud;
+				//System.out.println(bandwidthToCloud);
+			}else {
+				totalDelay +=getUserToCloudDelay(i);
+				bandwidthToCloud += instance.bandwidth[i];
+			
+			}
+		}
+		finalShow(d,flist);
 		//calculate bandwidth to cloud;
+	}
 	}
 	private double caluNetworkUsage() {
 		List<CentroidCluster<Kmeanpoint>> tempclusterResults=null;
@@ -125,8 +135,7 @@ public class Kmeans extends Algorithm{
 				double dy = clpo[1]-po[1];
 				double distance =Math.sqrt(dx*dx+dy*dy);
 				nu += distance*weight;
-				totalDelay+=getUserToFogDelay(idx, distance);
-				bandwidthToCloud += instance.bandwidth[idx]*Helper.percent2Cloud;
+				
 			}	
 		}
 		if(lastNetworkUsage> nu) {

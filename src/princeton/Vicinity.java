@@ -38,10 +38,9 @@ public class Vicinity extends Algorithm{
 		
 		//System.out.println("what exactly that sites length" +String.valueOf(sites.length));
 	}
-	public Vicinity(Instance ins) {
-		this(ins,4);
-	}
+
 	public Vicinity(Instance ins ,int k_cnt) {
+		super(ins);
 		instance = ins;
 		k_count  = k_cnt;
 		drawer = new Draw("Vicinity Algorithm-"+(k_cnt));
@@ -52,7 +51,7 @@ public class Vicinity extends Algorithm{
 		rx = ins.rx;
 		ry = ins.ry;
 		w  = ins.w;
-		wifiType = ins.wifiType;
+		
 		sites = ins.Nodes;
 		/*for ( int si=0; si<sites.length;si++) {
 			sites[si][0] = sites[si][0]+50;
@@ -94,7 +93,7 @@ public class Vicinity extends Algorithm{
 	}
 	private double getThreshold(){
 	
-		return 100/(Math.floor(Math.sqrt(k_count)));
+		return Helper.areaScale[0]/(Math.floor(Math.sqrt(k_count)));
 	
 	}
 	private double elapsedTime(){
@@ -106,6 +105,7 @@ public class Vicinity extends Algorithm{
 		return Math.sqrt(rx*rx+ry*ry);
 		
 	}
+	@Override
 	public void iterate() {
 		doneCheck();
 		drawer.clear();
@@ -121,27 +121,42 @@ public class Vicinity extends Algorithm{
 		drawer.show(10);
 		
 	}
+	@Override
 	public void doneCheck(){
 		exit = (vic>getThreshold())? true:false;
 		
 	}
+	
 	public void output() {
 		//calculate cost
+		List<FogEntity> flist = new ArrayList<FogEntity>();
+		
 		for(Integer k: mapping.keySet()) {
-			drawer.filledCircle(sites[k][0],sites[k][1], 1);
-			drawer.textLeft(sites[k][0]+5, sites[k][1], String.valueOf(k));
-			int sum = 0;
+			double [] te = {sites[k][0],sites[k][1]};
+			FogEntity e = new FogEntity(te);
+			
 			for(Integer v: mapping.get(k)) {
-				sum++;
+				e.addClient(v);
 			}
-			int t = 0;
-			//TODO upbound for machine type capacity
-			while(t<5) {
-				if(sum <= pCpu[t++]) break;
-			}
-			cost += pCost[t-1];
-			cost += Helper.costPerLocation;
+			flist.add(e);
 		}
+		for(int i=0;i<rx.length;i++) {
+			
+			boolean found = false;
+			for(Map.Entry<Integer,List<Integer>> entry:mapping.entrySet()) {
+				if(entry.getValue().contains(new Integer(i))) {
+					found =true;
+					break;
+				}
+			}
+			if(!found) {
+				totalDelay+=getUserToCloudDelay(i);
+				bandwidthToCloud +=instance.bandwidth[i];
+				count++;
+			}
+			found = false;
+			}
+		super.outputend(drawer, flist);
 		
 	}
 	private void updateCluster(int centroidnum){
@@ -162,6 +177,7 @@ public class Vicinity extends Algorithm{
 					
 					List<Integer> temlist= new ArrayList<Integer>();
 					double hotrate = 0;
+					int []bandwidth = instance.bandwidth;
 					for(int j= 0;j<rx.length;j++) {
 						//System.out.println(mapping.iterContainsValue(j));
 						if(distance(sites[i][0],sites[i][1],rx[j],ry[j])>vic||notSuitForNewSite(i,j,maintanenceQuene)) {
@@ -170,7 +186,7 @@ public class Vicinity extends Algorithm{
 						else{
 							//System.out.println(">>>>>>"+String.valueOf(distance(sites[i][0],sites[i][1],rx[j],ry[j])));
 							temlist.add(j);
-							hotrate+=w[j];
+							hotrate+=(double)bandwidth[j];
 					}
 						
 						}
@@ -227,7 +243,7 @@ public class Vicinity extends Algorithm{
 				int oldClientidx = mapping.iterContainsValueAt(clientIndex)[1];
 				if(distance(sites[oldSiteIdx][0],sites[oldSiteIdx][1],rx[clientIndex],ry[clientIndex])>
 					distance(sites[siteIndex][0],sites[siteIndex][1],rx[clientIndex],ry[clientIndex])) {
-					if(mapping.get(oldSiteIdx).get(oldClientidx)==clientIndex) {
+					if(mapping.get(oldSiteIdx).get(oldClientidx).equals(new Integer(clientIndex))){
 						tempdeletelist.put(oldSiteIdx, clientIndex);
 						deleteQueue.put(siteIndex,tempdeletelist);
 						return false;
@@ -253,8 +269,8 @@ public class Vicinity extends Algorithm{
 				drawer.line(sites[k][0], sites[k][1], rx[v]	, ry[v]);
 				double tempdistance = distance(sites[k][0], sites[k][1], rx[v]	, ry[v]);
 				networkUsage+= w[v]*tempdistance;
-				totalDelay+=getUserToFogDelay(v, tempdistance);
-				bandwidthToCloud += instance.bandwidth[v]*Helper.percent2Cloud;
+				//totalDelay+=getUserToFogDelay(v, tempdistance);
+				//bandwidthToCloud += instance.bandwidth[v]*Helper.percent2Cloud;
 				
 			}
 			

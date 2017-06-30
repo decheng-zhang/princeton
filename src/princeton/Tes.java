@@ -1,6 +1,15 @@
 package princeton;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+
 import com.panayotis.gnuplot.JavaPlot;
 import com.panayotis.gnuplot.plot.DataSetPlot;
 import com.panayotis.gnuplot.style.PlotStyle;
@@ -16,11 +25,31 @@ public class Tes {
 		   a=10
 	       return a ;
 	    }*/
-	
+	    public static <K, V extends Comparable<? super V>> Map<K, V> 
+	    sortByValue( Map<K, V> map )
+	{
+	    List<Map.Entry<K, V>> list =
+	        new LinkedList<>( map.entrySet() );
+	    Collections.sort( list, new Comparator<Map.Entry<K, V>>()
+	    {
+	        @Override
+	        public int compare( Map.Entry<K, V> o1, Map.Entry<K, V> o2 )
+	        {
+	            return ( o2.getValue() ).compareTo( o1.getValue() );
+	        }
+	    } );
+
+	    Map<K, V> result = new LinkedHashMap<>();
+	    for (Map.Entry<K, V> entry : list)
+	    {
+	        result.put( entry.getKey(), entry.getValue() );
+	    }
+	    return result;
+	}
 
 	    public static void main(String[] args) {
 
-	        JavaPlot p = new JavaPlot("C:/Program Files/gnuplot/bin/gnuplot.exe");
+	        /*JavaPlot p = new JavaPlot("C:/Program Files/gnuplot/bin/gnuplot.exe");
 	       
 	        double tab[][];
 
@@ -47,7 +76,16 @@ public class Tes {
 	        //p.newGraph();
 	        p.plot();
 	        p.setPersist(true);
-	       
+	       */
+	    	Random r = new Random();
+	    	Map<String, Integer> testMap = new HashMap<String, Integer>(1000);
+	    	for(int i = 0 ; i < 1000 ; ++i) {
+	            testMap.put( "SomeString" + r.nextInt(), r.nextInt());
+	        }
+	    	testMap= sortByValue(testMap);
+	    	for(Map.Entry<String, Integer> entry:testMap.entrySet()) {
+	    		System.out.println(entry.getValue());
+	    	}
 	    }
  
 	}

@@ -58,6 +58,7 @@ public class Instance implements Serializable{
 		System.out.println("checking path:  "+path +".ser");
 		boolean exists = varTmpDir.exists();
 		if(!exists) {
+			
 		clents = clentsnum;
 		fogs = k_cnt;
 		results  = new ConcurrentLinkedQueue<Object[]>();
@@ -73,20 +74,23 @@ public class Instance implements Serializable{
 		Nodes = nodeRandomizer(areaScale, k_cnt);
         //Nodes = nodeCutter((areaScale),(int)Math.sqrt(k_cnt));
 		for (int i = 0; i < clentsnum; i++) {
+			
             rx[i] = areaScale[0] * Math.random();
             ry[i] = areaScale[1] * Math.random();
             Random r = new Random();
+            int nn = r.nextInt(18)+1;
             w[i] = r.nextGaussian()*10+50;
-            cpu[i] = r.nextInt(72)+1;
-            mem[i]= r.nextInt(720)+1;
-            packets[i]= r.nextInt(1000)+1;
+            cpu[i] = nn*(r.nextInt(4)+1);
+            mem[i]= nn*(r.nextInt(40)+1);
+            packets[i]= nn*(r.nextInt(64)+1);
             bandwidth[i] = packets[i] *1500;
-            wifiType[i]=(r.nextInt(6)+2)*10;
+            wifiType[i]=nn*((r.nextInt(6)+2)*10);
           
         }
 		this.serializer(path);
 		this.objectSerializer(path);
 		}else {
+			System.out.println("Instance exists, loading cached ser");
 			Instance tmp = objectDeserializer(path);
 			clents = tmp.clents;
 			fogs = tmp.fogs;
@@ -248,11 +252,19 @@ public class Instance implements Serializable{
 		return nodes;
 	}
 	public static void main(String args[]) {
-		for(int j =1;j<3;j++) {
+		/*for(int j =1;j<3;j++) {
 		for(int i =1;i<21;i++) {
 			String path = (i*5)+"-"+(j*5)+"-version-1";
 		Instance t = new Instance(i*5,j*5,path);
 		 t.objectSerializer(path);
 		 t.serializer(path);
-	 }}}
+	 }
+		}*/
+		//for(int i =1;i<5;i++) {
+		String path = (5)+"-"+(5)+"-june-29-version-";
+		Instance t = new Instance(5,5,path);
+		 t.objectSerializer(path);
+		 t.serializer(path);
+		//}
+		}
 }

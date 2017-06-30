@@ -163,10 +163,12 @@ set loadpath
 set fontpath 
 set psdir
 set fit brief errorvariables nocovariancevariables errorscaling prescale nowrap v5
+set xlabel "TotalDelay(ms)"
+set ylabel "TotalTrafficToCloud(MB)"
 GNUTERM = "wxt"
 x = 0.0
 DEBUG_TERM_HTIC = 127
 DEBUG_TERM_VTIC = 127
 ## Last datafile plotted: "file.dat"
-plot "file.dat" using ($2+0.05):($3+0.05):1 with labels, "" using 2:3
+plot "file.dat" using ($2):($3):1 with labels, "" using 2:3
 #    EOF

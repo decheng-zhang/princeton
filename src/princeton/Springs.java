@@ -66,10 +66,11 @@ public class Springs extends Algorithm{
 		
 	}
 	public Springs(Instance ins, int k_cnt) {
+		super(ins);
 		rx = ins.rx;
 		ry = ins.ry;
 		w  = ins.w;
-		wifiType = ins.wifiType;
+	
 		bandwidth = ins.bandwidth;
 		bandwidthMatrix = new double[rx.length];
 		Nodes = ins.Nodes;
@@ -125,6 +126,7 @@ public class Springs extends Algorithm{
         }
 		
 	}
+
 	private static double elapsedTime() {
 		return timer1.elapsedTime();
 	}
@@ -272,22 +274,8 @@ public class Springs extends Algorithm{
 				{
 					e.addClient(i);
 				}
-				
 			}
 			flist.add(e);
-			calCost(flist);
-			/*int sum = 0;
-			for(int i :cents.get(j).getConnection()) {
-				sum+=i;
-			}
-			int t = 0;
-			//TODO upbound for machine type capacity
-			while(t<5) {
-				if(sum <= pCpu[t++]) break;
-			}*/
-			//cost += pCost[t-1];
-			cost += getCostForThisFog(j);
-			//cost += Helper.costPerLocation;
 		}
 		
 		for(int i=0;i<rx.length;i++) {
@@ -301,14 +289,14 @@ public class Springs extends Algorithm{
 				y++;
 			}
 			if(!found) {
-				bandwidthToCloud += (double)bandwidth[i];
-				bandwidthMatrix[i]=(double)bandwidth[i];
-				count++;
 				totalDelay+=getUserToCloudDelay(i);
+				bandwidthToCloud +=instance.bandwidth[i];
+				count++;
+				
 			}
 			found = false;
 			}
-		
+		super.outputend(d, flist);
 		
 		
 	
@@ -442,10 +430,8 @@ public class Springs extends Algorithm{
 				double tempdistance =Math.sqrt(tempdx*tempdx+tempdy*tempdy);
                 networkUsage+= w[j]*tempdistance;
                // System.out.println("let me see"+(count++)+":"+ (tempdistance/5));
-                totalDelay+=getUserToFogDelay(j,tempdistance);
-                bandwidthToCloud+=bandwidth[j]*Helper.percent2Cloud;
-                bandwidthMatrix[j]=bandwidth[j]*Helper.percent2Cloud;
-                count++;
+
+             
             	}
 		}
 			
