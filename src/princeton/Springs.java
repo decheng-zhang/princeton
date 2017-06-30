@@ -47,7 +47,7 @@ public class Springs extends Algorithm{
     static double mergelastime = 0;
     //double networkUsage;
     Draw d = null;
-    int count;
+    
     int []bandwidth;
     double []bandwidthMatrix ;
     
@@ -77,6 +77,10 @@ public class Springs extends Algorithm{
 		k_count = k_cnt;
 		cents = new LinkedList<Centroid>();
 		glocon = new double[2][rx.length];
+		for(int i=0;i<rx.length;i++) {
+			glocon[0][i]=-1;
+			glocon[1][i]=Double.MAX_VALUE;
+		}
 		Arrays.fill(glocon[0], -1);
 		//System.out.println(Arrays.toString(glocon[0]));
 		Arrays.fill(glocon[1], Double.MAX_VALUE );
@@ -131,7 +135,7 @@ public class Springs extends Algorithm{
 		return timer1.elapsedTime();
 	}
 	private double getThreshold(double clentsnum) {
-		return 100/(Math.floor(Math.sqrt(clentsnum))+1);
+		return Helper.areaScale[0]/(Math.floor(Math.sqrt(clentsnum)));
 	}
 	private Centroid merge(Centroid back,Centroid front) {
 		Centroid retune = null;
@@ -200,14 +204,14 @@ public class Springs extends Algorithm{
 
 	public void iterate() {
 		d.clear();
-		if((elapsedTime()-mergelastime)> MERGE_UPTATE_INTERVAL) {
+		/*if((elapsedTime()-mergelastime)> MERGE_UPTATE_INTERVAL) {
 			//System.out.println("The cents size before mergecheck func  :" + cents.size());
 			//System.out.println("MERGE_DISTANCE  :" + MERGE_DISTANCE);
 			mergelastime = elapsedTime();
 			cents = mergeCheck(cents,MERGE_DISTANCE);
 			
 			//System.out.println("The cents size after mergecheck func" + cents.size());
-		}
+		}*/
 		Update();
 		
 		 for ( int si=0; si<Nodes.length;si++) {
@@ -290,6 +294,7 @@ public class Springs extends Algorithm{
 			}
 			if(!found) {
 				totalDelay+=getUserToCloudDelay(i);
+				
 				bandwidthToCloud +=instance.bandwidth[i];
 				count++;
 				
@@ -344,13 +349,8 @@ public class Springs extends Algorithm{
             // spring forces act between every pairing of particles
             // spring force is proportional to the difference between the rest length of the spring
             // and the distance between the 2 particles it's acting on
-       
-            	
                 for (int j = 0; j < totalNum; j++) {
 
-       
-
-                    
                     // calculate distance between particles i and j
                     double dx = Springs.rx[j] - rx;
                     double dy = Springs.ry[j] - ry;
@@ -360,29 +360,32 @@ public class Springs extends Algorithm{
                     
                     double ss =springStrength*(bandwidth[j]/150000);
                     
-                   double force = (length<threshold)? ss*length :0;
-                   if(force ==0) {
+                   double force = (length<threshold)? ss*length :-1;
+                  
+                   if(force ==-1) {
                 	   connection[j]=0;
-                	   
                 	   continue;
-                   }else if(glocon[0][j]==id&&connection[j]==1){
+                   }else if(force ==-1&&glocon[0][j]==id){
+                	   glocon[0][j]=-1;
+                	   glocon[1][j]=Double.MAX_VALUE;
+                	   connection[j]=0;
+                	   continue;
+                   }
+                   else if(glocon[0][j]==id&&connection[j]==1){
                 	   glocon[1][j]=length;
-                   }else if(connection[j]==1) {
+                   }else if(glocon[0][j]!=id&&connection[j]==1) {
                 	   connection[j]=0;
                 	   continue;
                    }else if(connection[j]==0&&glocon[1][j]-5>length)
                    {
+                	   
                 	   connection[j]=1;
                 	   glocon[0][j]=id;
                 	   glocon[1][j]=length;
                    }else {
                 	   continue;
                    }
- 
-                		 
-       
-                
-                   
+  
                     //double force =  ss * (length);
                 	
                     double springForceX = force * dx / length;
@@ -393,16 +396,12 @@ public class Springs extends Algorithm{
                     fy += springForceY;
                    
                 }
-                
-            
             // add drag force
             // drag is proportional to velocity but in the opposite direction
             
                 fx += -drag * vx;
                 fy += -drag * vy;
-            
-            
-                
+
             // update positions using approximation
         
                 vx += fx *timeStep/particleMass;

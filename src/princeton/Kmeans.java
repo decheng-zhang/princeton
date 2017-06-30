@@ -100,20 +100,23 @@ public class Kmeans extends Algorithm{
 		
 		cost = calCost(flist);
 		//calculate delay;
-		bandwidthToCloud = 0.0;
+		//bandwidthToCloud = 0.0;
 		for(FogEntity f:flist) {
+			
 			for(Integer i:f.clientIdxList) {
+				
 				double []ic = {instance.rx[i],instance.ry[i]};
 				if(!secondDropList.contains(i)) {
 				totalDelay +=getUserToFogDelay(i,f.getDist2Client(ic));
-				//System.out.println(totalDelay);
+				
 				bandwidthToCloud += (double)instance.bandwidth[i]*Helper.percent2Cloud;
-				//System.out.println(bandwidthToCloud);
+				
 			}else {
 				totalDelay +=getUserToCloudDelay(i);
-				bandwidthToCloud += instance.bandwidth[i];
-			
+				bandwidthToCloud += (double)instance.bandwidth[i];
+				
 			}
+				
 		}
 		finalShow(d,flist);
 		//calculate bandwidth to cloud;
@@ -141,7 +144,7 @@ public class Kmeans extends Algorithm{
 		if(lastNetworkUsage> nu) {
 			lastNetworkUsage=nu;
 			
-			System.out.println("Kmean update occurs");
+			//System.out.println("Kmean update occurs");
 			clusterResults = tempclusterResults;
 			}
 		networkUsage  = nu;

@@ -29,7 +29,7 @@ public class Exp implements Runnable{
 		algorithm.output();
 		//String indent = "	";
 		
-		Object []tems  = {name,(algorithm.getTotalDelay()*1000),(algorithm.getBandwidthToCloud()/1000000),(algorithm.getCost()),(algorithm.getNetworkUsage()),(algorithm.getInnerDelay())};
+		Object []tems  = {name,(algorithm.getTotalDelay()*1000),(algorithm.getBandwidthToCloud()/1000000),(algorithm.getCost()),(algorithm.getNetworkUsage()),(algorithm.getInnerDelay()),(algorithm.drop)};
 		//System.out.println(name+(algorithm.getTotalDelay()*1000)+(algorithm.getBandwidthToCloud()/1000000)+(algorithm.getCost())+(algorithm.getNetworkUsage()));
 		isinexp.results.add(tems);
 		doneSignal.countDown();

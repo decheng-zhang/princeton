@@ -14,7 +14,7 @@ static final double percent2Cloud = 0.01;
 static final double kmeanTimeout=4;
 static final int xaxis=1;
 static final int yaxis=2;
-static final String outputFileName = "5-5-june-29-version-";
+static final String outputFileName = "30-5-june-30-with-10150users-after-meeting";
 //static final String outputFileName = null;//generate new instance;
 
 public static <K, V extends Comparable<? super V>> Map<K, V> 
@@ -27,7 +27,7 @@ Collections.sort( list, new Comparator<Map.Entry<K, V>>()
     @Override
     public int compare( Map.Entry<K, V> o1, Map.Entry<K, V> o2 )
     {
-        return ( o2.getValue() ).compareTo( o1.getValue() );
+        return ( o1.getValue() ).compareTo( o2.getValue() );
     }
 } );
 

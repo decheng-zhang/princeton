@@ -11,7 +11,7 @@ import edu.princeton.cs.introcs.Draw;
 public abstract class Algorithm{
 	int count =0;
 	final int[] pCpu= {90,180,360,720};//core
-	final int [] pMem = {480,800,1600,3200};//MB
+	final int [] pMem = {480000,800000,1600000,3200000};//MB
 	final int[] pStorage = {7000,15000,15000,30000,30000};//GB
 	final int[] pCost = {67200,135000,269400,389400};//USD
 	final int[] pNic = {360,1024,1024,10240,10240};//Mbps
@@ -26,6 +26,7 @@ public abstract class Algorithm{
 	int []wifiType;
 	boolean []nodeOpenness;
 	List<Integer> secondDropList = new ArrayList<Integer>();
+	int drop =0;
 	Algorithm(Instance i){
 		instance =i;
 		wifiType = i.wifiType;
@@ -41,10 +42,18 @@ public abstract class Algorithm{
 		return innerDelay;
 	}
 	protected double getUserToCloudDelay(int idx) {
-		return (double)instance.packets[idx]*12000/(double)(wifiType[idx]*1000000) + 0.0056+ 0.000075;
+		double a = (double)instance.bandwidth[idx]*8;
+		//System.out.println("bandwith in bits "+ (a));
+		double t = a/((double)wifiType[idx]*1000000)+ 0.0056+ 0.000075;
+		//System.out.println("delay in s "+ (t));
+		
+		assert Double.compare(t, 0.0) > 0: "hahaha "+a;
+		return t;
 	}
 	protected double getUserToFogDelay(int idx, double dist){
-		return (double)instance.packets[idx]*12000/(double)(wifiType[idx]*1000000)+ dist/177000 +0.0000125;
+		double a = (double)instance.packets[idx]*12000/((double)wifiType[idx]*1000000)+ dist/177000 +0.0000125;
+		assert a >0.0: "a is "+(wifiType[idx]*1000000);
+		return a;
 	}
 	protected void doneCheck() {
 		if(Math.abs(lastNetworkUsage - networkUsage) < 0.1) {
@@ -62,6 +71,7 @@ public abstract class Algorithm{
 		for(FogEntity f : foglist) {
 			tcost+=(calCost(f)+Helper.costPerLocation);
 		}
+		drop +=secondDropList.size();
 		return tcost;
 	}
 	private double calCost(FogEntity f) {
@@ -75,26 +85,29 @@ public abstract class Algorithm{
 			idxToCPU.put(i, instance.cpu[i]);
 			idxToBW.put(i, instance.bandwidth[i]);
 		}
-		idxToBW = Helper.sortByValue(idxToBW);
+		idxToCPU = Helper.sortByValue(idxToCPU);
 		//idxToMEM = Helper.sortByValue(idxToMEM);
 		int i=0;
-		for(Map.Entry<Integer,Integer> entry:idxToBW.entrySet()) {
+		for(Map.Entry<Integer,Integer> entry:idxToCPU.entrySet()) {
 			int last = entry.getKey();
 			
-		tcpu +=instance.cpu[entry.getKey()];
+		tcpu +=instance.cpu[entry.getKey()];	
 		tmem +=instance.mem[entry.getKey()];
-			while(i<pCpu.length && pCpu[i]<tcpu) {
-				i++;
-				}
-			while(i<pCpu.length && pMem[i]<tmem) {
-				i++;
+			while(i<pCpu.length-1) {
+				if(pCpu[i]<tcpu || pMem[i]<tmem) {
+					i++;
+					continue;
+				}else {
+					break;}
 			}
-		if(i>=pCpu.length) {
-			System.out.println("overflow err,fog is not cloud");
+		if(pCpu[i]<tcpu || pMem[i]<tmem) {
 			secondDropList.add(last);
-			i--;
+			
 		}
+		//System.out.println("the i is "+ i +"with :"+(tcpu)+"::"+(tmem));
+		//assert secondDropList.size()<1 :"Now it is";
 	}
+		//assert false:""
 		f.setFogtype(i);
 		return pCost[i];
 	}
@@ -134,7 +147,7 @@ public abstract class Algorithm{
 		for(FogEntity f:flist) {
 			
 			d.filledCircle(f.location[0], f.location[1], f.getFogtype());
-			d.textLeft(f.location[0], f.location[1]+3, "fog-"+ (f.getFogtype()+1));
+			d.textLeft(f.location[0], f.location[1]+3, "fogType-"+ (f.getFogtype()+1));
 			for(Integer i:f.getClients()) {
 				if(!secondDropList.contains(i)) {
 				d.line(instance.rx[i], instance.ry[i],f.location[0],f.location[1]);
@@ -167,21 +180,27 @@ public abstract class Algorithm{
 	public void outputend(Draw d, List<FogEntity> flist) {
 			cost = calCost(flist);
 			//calculate delay;
+			System.out.println("ooooooo+"+(secondDropList.size()));
 			for(FogEntity f:flist) {
 				for(Integer i:f.clientIdxList) {
 					double []ic = {instance.rx[i],instance.ry[i]};
 				if(!secondDropList.contains(i)) {
 					totalDelay +=getUserToFogDelay(i,f.getDist2Client(ic));
-					bandwidthToCloud += instance.bandwidth[i]*Helper.percent2Cloud;
-					System.out.println("");
+					
+					bandwidthToCloud += (double)instance.bandwidth[i]*Helper.percent2Cloud;
+					assert (double)instance.bandwidth[i]*Helper.percent2Cloud >0.0: "on the contrary";
+					
 				}else {
 					totalDelay +=getUserToCloudDelay(i);
-					bandwidthToCloud += instance.bandwidth[i];
+					bandwidthToCloud += (double)instance.bandwidth[i];
+					assert instance.bandwidth[i]> 0.0: "on the contrary";
+					
 				}
+				
 				count++;
 			}
 			}
-				System.out.println("attentino"+(count));
+				assert count==wifiType.length: "attention, no service";
 			finalShow(d,flist);
 			//calculate bandwidth to cloud;
 		

@@ -78,7 +78,7 @@ public class Instance implements Serializable{
             rx[i] = areaScale[0] * Math.random();
             ry[i] = areaScale[1] * Math.random();
             Random r = new Random();
-            int nn = r.nextInt(18)+1;
+            int nn = r.nextInt(141)+10;
             w[i] = r.nextGaussian()*10+50;
             cpu[i] = nn*(r.nextInt(4)+1);
             mem[i]= nn*(r.nextInt(40)+1);
@@ -261,8 +261,8 @@ public class Instance implements Serializable{
 	 }
 		}*/
 		//for(int i =1;i<5;i++) {
-		String path = (5)+"-"+(5)+"-june-29-version-";
-		Instance t = new Instance(5,5,path);
+		String path = (30)+"-"+(5)+"-june-30-with-10150users-after-meeting";
+		Instance t = new Instance(30,5,path);
 		 t.objectSerializer(path);
 		 t.serializer(path);
 		//}
